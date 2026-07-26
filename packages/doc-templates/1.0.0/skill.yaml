@@ -1,0 +1,10 @@
+kind: skill
+name: doc-templates
+version: 1.0.0
+description: >
+  Reusable document format templates (professional report, resume, business
+  email, meeting minutes, cover letter) with structure rules, typography specs
+  (font, size, spacing), and examples. Designed to be depended on by
+  formatting/writing agents.
+entry: SKILL.md
+dependencies: []
