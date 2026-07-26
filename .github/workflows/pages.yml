@@ -28,7 +28,7 @@ jobs:
       - name: Build site index
         run: |
           python scripts/build_site.py .
-          cp -r packages site/packages   # tarball download links work from the UI
+          if [ -d packages ]; then cp -r packages site/packages; fi
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
