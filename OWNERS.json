@@ -1,0 +1,8 @@
+{
+  "html-parse": ["YOUR_USERNAME"],
+  "web-research": ["YOUR_USERNAME"],
+  "email-drafting": ["YOUR_USERNAME"],
+  "meeting-notes-agent": ["YOUR_USERNAME"],
+  "doc-templates": ["YOUR_USERNAME"],
+  "doc-formatter-agent": ["YOUR_USERNAME"]
+}
