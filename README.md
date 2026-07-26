@@ -1,6 +1,6 @@
 # agentx-registry
 
-Central package registry for [agentx](https://github.com/YOUR_USERNAME/agentx) — AI agents & skills, Maven-style.
+Central package registry for [agentx](https://github.com/agentxpy/agentx) — AI agents & skills, Maven-style.
 
 **No server. This git repository IS the registry**, served via GitHub raw URLs.
 
@@ -8,7 +8,7 @@ Central package registry for [agentx](https://github.com/YOUR_USERNAME/agentx) �
 
 ```bash
 pip install agentx-cli
-export AGENTX_REGISTRY=https://raw.githubusercontent.com/YOUR_USERNAME/agentx-registry/main
+export AGENTX_REGISTRY=https://raw.githubusercontent.com/agentxpy/agentx-registry/main
 agentx install my-agent
 ```
 

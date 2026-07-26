@@ -1,8 +1,8 @@
 {
-  "html-parse": ["YOUR_USERNAME"],
-  "web-research": ["YOUR_USERNAME"],
-  "email-drafting": ["YOUR_USERNAME"],
-  "meeting-notes-agent": ["YOUR_USERNAME"],
-  "doc-templates": ["YOUR_USERNAME"],
-  "doc-formatter-agent": ["YOUR_USERNAME"]
+  "html-parse": ["agentxpy"],
+  "web-research": ["agentxpy"],
+  "email-drafting": ["agentxpy"],
+  "meeting-notes-agent": ["agentxpy"],
+  "doc-templates": ["agentxpy"],
+  "doc-formatter-agent": ["agentxpy"]
 }
