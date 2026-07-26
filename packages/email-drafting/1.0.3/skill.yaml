@@ -1,0 +1,6 @@
+name: email-drafting
+version: 1.0.3
+description: ''
+dependencies: []
+kind: skill
+entry: SKILL.md
