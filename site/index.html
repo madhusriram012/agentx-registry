@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>agentx registry</title>
+<style>
+  :root{
+    --paper:#F4F6F5; --card:#FCFDFD; --ink:#152220; --ink-soft:#4C5B58; --ink-faint:#8A9793;
+    --line:#DDE4E2; --stamp:#0E6B5C; --stamp-soft:#E3EFEC; --agent:#8A5A00; --agent-soft:#F5EBD8;
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:"Space Grotesk","Inter",system-ui,-apple-system,sans-serif;
+  }
+  @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+  *{box-sizing:border-box;margin:0}
+  body{background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.55}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:880px;margin:0 auto;padding:0 20px}
+
+  header{border-bottom:1px solid var(--line);background:var(--card)}
+  .bar{display:flex;align-items:center;gap:20px;padding:14px 0;flex-wrap:wrap}
+  .mark{font-family:var(--mono);font-weight:600;font-size:17px;letter-spacing:-.02em}
+  .mark b{color:var(--stamp)}
+  .tag{font-size:12px;color:var(--ink-faint);border-left:1px solid var(--line);padding-left:20px}
+  #q{margin-left:auto;font-family:var(--mono);font-size:14px;color:var(--ink);
+     background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:8px 12px;width:min(300px,100%)}
+  #q:focus{outline:2px solid var(--stamp);outline-offset:1px;border-color:transparent}
+
+  main{padding:34px 0 80px}
+  .count{font-family:var(--mono);font-size:12px;color:var(--ink-faint);margin-bottom:14px;text-transform:uppercase;letter-spacing:.08em}
+
+  .pkg{display:block;background:var(--card);border:1px solid var(--line);border-radius:8px;
+       padding:18px 20px;margin-bottom:12px;transition:border-color .12s}
+  .pkg:hover,.pkg:focus-visible{border-color:var(--stamp)}
+  .pkg:focus-visible{outline:2px solid var(--stamp);outline-offset:1px}
+  .coord{font-family:var(--mono);font-size:19px;font-weight:600;letter-spacing:-.01em}
+  .coord .v{color:var(--ink-faint);font-weight:400}
+  .kind{display:inline-block;font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;
+        padding:2px 8px;border-radius:3px;margin-left:10px;vertical-align:2px}
+  .kind.skill{color:var(--stamp);background:var(--stamp-soft);border:1px solid currentColor}
+  .kind.agent{color:var(--agent);background:var(--agent-soft);border:1px solid currentColor}
+  .desc{color:var(--ink-soft);font-size:14px;margin-top:6px;max-width:64ch}
+  .meta{font-family:var(--mono);font-size:12px;color:var(--ink-faint);margin-top:10px}
+
+  /* detail view */
+  .back{font-family:var(--mono);font-size:13px;color:var(--stamp);display:inline-block;margin-bottom:22px}
+  .stamp{font-family:var(--mono);font-weight:600;font-size:clamp(24px,5vw,38px);letter-spacing:-.02em;line-height:1.15}
+  .stamp .v{color:var(--ink-faint);font-weight:400}
+  .section{margin-top:30px}
+  .label{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--ink-faint);margin-bottom:10px}
+  .install{display:flex;align-items:center;gap:10px;background:var(--ink);color:#EDF3F1;border-radius:8px;
+           font-family:var(--mono);font-size:14px;padding:14px 16px;overflow-x:auto}
+  .install button{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--ink);background:#EDF3F1;
+                  border:0;border-radius:5px;padding:5px 12px;cursor:pointer;flex-shrink:0}
+  .install button:focus-visible{outline:2px solid var(--stamp)}
+  table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:8px;overflow:hidden;font-size:14px}
+  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line)}
+  th{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-faint);font-weight:500}
+  tr:last-child td{border-bottom:0}
+  td.mono, .deps a{font-family:var(--mono);font-size:13.5px}
+  .deps a{display:inline-block;background:var(--stamp-soft);color:var(--stamp);border-radius:5px;padding:4px 10px;margin:0 8px 8px 0}
+  .deps a:hover{text-decoration:underline}
+  .empty{color:var(--ink-faint);font-size:14px}
+  footer{border-top:1px solid var(--line);padding:20px 0;font-family:var(--mono);font-size:12px;color:var(--ink-faint)}
+</style>
+</head>
+<body>
+<header><div class="wrap bar">
+  <a class="mark" href="#/">agent<b>x</b> registry</a>
+  <span class="tag">skills are libraries · agents are apps</span>
+  <input id="q" type="search" placeholder="search packages…" aria-label="Search packages">
+</div></header>
+
+<main class="wrap" id="app" aria-live="polite"><p class="empty">Loading registry…</p></main>
+<footer><div class="wrap">served entirely from a git repository — no servers anywhere</div></footer>
+
+<script>
+let DATA = [];
+const app = document.getElementById("app");
+const q = document.getElementById("q");
+const esc = s => (s||"").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const depName = d => d.split("@")[0];
+
+function listView(filter){
+  const f = (filter||"").toLowerCase().trim();
+  const pkgs = DATA.filter(p => !f || p.name.includes(f) || (p.description||"").toLowerCase().includes(f));
+  app.innerHTML = `<p class="count">${pkgs.length} package${pkgs.length===1?"":"s"}${f?` matching “${esc(f)}”`:""}</p>` +
+    (pkgs.length ? pkgs.map(p => `
+      <a class="pkg" href="#/pkg/${esc(p.name)}">
+        <span class="coord">${esc(p.name)}<span class="v">@${esc(p.latest)}</span></span>
+        <span class="kind ${esc(p.kind)}">${esc(p.kind)}</span>
+        ${p.description ? `<p class="desc">${esc(p.description)}</p>` : ""}
+        <p class="meta">${p.versions.length} version${p.versions.length===1?"":"s"}${p.dependencies.length?` · ${p.dependencies.length} dep${p.dependencies.length===1?"":"s"}`:""}${p.owners.length?` · @${esc(p.owners.join(", @"))}`:""}</p>
+      </a>`).join("")
+    : `<p class="empty">No packages match. Try a shorter search, or publish the first one: <code>agentx publish &lt;dir&gt; --remote</code></p>`);
+}
+
+function detailView(name){
+  const p = DATA.find(x => x.name === name);
+  if(!p){ app.innerHTML = `<a class="back" href="#/">← all packages</a><p class="empty">Package “${esc(name)}” isn’t in this registry.</p>`; return; }
+  const cmd = p.kind === "agent" ? `agentx get ${p.name} && agentx install ${p.name}` : `# add to your manifest:  ${p.name}@^${p.latest}`;
+  app.innerHTML = `
+    <a class="back" href="#/">← all packages</a>
+    <div class="stamp">${esc(p.name)}<span class="v">@${esc(p.latest)}</span> <span class="kind ${esc(p.kind)}">${esc(p.kind)}</span></div>
+    ${p.description ? `<p class="desc" style="margin-top:10px;font-size:15px">${esc(p.description)}</p>` : ""}
+
+    <div class="section"><p class="label">${p.kind === "agent" ? "Get and run" : "Use as a dependency"}</p>
+      <div class="install"><span id="cmd">${esc(cmd)}</span><button onclick="navigator.clipboard.writeText(document.getElementById('cmd').textContent).then(()=>{this.textContent='Copied';setTimeout(()=>this.textContent='Copy',1500)})">Copy</button></div>
+    </div>
+
+    <div class="section"><p class="label">Dependencies</p>
+      ${p.dependencies.length ? `<p class="deps">${p.dependencies.map(d => `<a href="#/pkg/${esc(depName(d))}">${esc(d)}</a>`).join("")}</p>` : `<p class="empty">None — zero-dependency package.</p>`}
+    </div>
+
+    <div class="section"><p class="label">Versions</p>
+      <table><tr><th>Version</th><th>Artifact</th></tr>
+      ${[...p.versions].reverse().map(v => `<tr><td class="mono">${esc(v)}${v===p.latest?" · latest":""}</td>
+        <td class="mono"><a href="packages/${esc(p.name)}/${esc(v)}/${esc(p.name)}-${esc(v)}.tgz">${esc(p.name)}-${esc(v)}.tgz</a></td></tr>`).join("")}
+      </table>
+    </div>
+    ${p.model ? `<div class="section"><p class="label">Model</p><p class="desc" style="font-family:var(--mono)">${esc(p.model)}</p></div>` : ""}`;
+}
+
+function route(){
+  const m = location.hash.match(/^#\/pkg\/([a-z0-9-]+)/);
+  if(m){ detailView(m[1]); } else { listView(q.value); }
+  window.scrollTo(0,0);
+}
+q.addEventListener("input", () => { if(location.hash.startsWith("#/pkg/")) location.hash = "#/"; listView(q.value); });
+window.addEventListener("hashchange", route);
+
+fetch("index.json").then(r => r.json()).then(d => { DATA = d.packages || []; route(); })
+  .catch(() => { app.innerHTML = `<p class="empty">Couldn’t load index.json — has CI run since the last merge?</p>`; });
+</script>
+</body>
+</html>
