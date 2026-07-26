@@ -1,0 +1,34 @@
+name: automerge
+# pull_request_target runs trusted base-repo code with write access.
+# SECURITY: this workflow must NEVER check out or execute PR code.
+# It only inspects the PR's changed file paths via the API and enables
+# auto-merge for publish-shaped PRs (packages/** + OWNERS.json only).
+# Anything touching scripts/, workflows, or other files waits for human review.
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize]
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  automerge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enable auto-merge for publish-only PRs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          files=$(gh api "repos/$REPO/pulls/$PR/files" --paginate --jq '.[].filename')
+          echo "PR changes:"; echo "$files"
+          bad=$(echo "$files" | grep -Ev '^(packages/|OWNERS\.json$)' || true)
+          if [ -n "$bad" ]; then
+            echo "Not a publish-only PR (touches: $bad) — leaving for manual review."
+            exit 0
+          fi
+          gh pr merge --squash --auto "$PR" --repo "$REPO"
+          echo "Auto-merge enabled — merges when the 'validate' check passes."

@@ -1,13 +1,12 @@
 name: validate
 on:
-  pull_request_target:
+  pull_request:
     branches: [main]
   push:
     branches: [main]
 
 permissions:
   contents: read
-  pull-requests: write
 
 jobs:
   validate:
@@ -16,26 +15,15 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || github.ref }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - run: pip install pyyaml
       - name: Validate (full + immutability + ownership on PRs)
         run: |
-          if [ "${{ github.event_name }}" = "pull_request_target" ]; then
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
             git fetch origin main
             python scripts/validate.py . --base main --pr-author "${{ github.event.pull_request.user.login }}"
           else
             python scripts/validate.py .
           fi
-
-  automerge:
-    needs: validate
-    if: github.event_name == 'pull_request_target'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Enable auto-merge (lands when branch protection is satisfied)
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh pr merge --squash --auto "${{ github.event.pull_request.html_url }}"
